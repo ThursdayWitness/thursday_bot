@@ -1,0 +1,7 @@
+# Config example
+
+
+my_id = #your personal Telegram id
+#----Pyrogram----#
+api_id = #your id: int
+api_hash = #your hash: string
