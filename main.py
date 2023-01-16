@@ -1,8 +1,9 @@
 import asyncio
+import sticker_set
+import re
 from pyrogram import Client, filters
 from config.config import api_id, api_hash
 from pyrogram.types import Message
-import sticker_set
 from chat_ids import ids as chats
 
 stickers = sticker_set.stickers
@@ -34,7 +35,7 @@ async def send_handshake(client: Client, message: Message):
     await client.send_message(message.chat.id, "🤝")
 
 
-@app.on_message(filters.me & filters.command("kws"))
+@app.on_message(filters.me & filters.command("kws", prefixes='.'))
 async def help_keywords(client: Client, message: Message):
     await client.delete_messages(message.chat.id, message.id)
     keywords = (','.join(stickers.keys())).split(',')
@@ -50,10 +51,22 @@ async def help_keywords(client: Client, message: Message):
 async def words_to_stickers_handler(client: Client, message: Message):
     if message.chat.id != chats['saved'] and message.chat.id != chats['ls']:
         return
-    text = message.text.lower()
-    if text in stickers:
-        await message.delete()
-        await client.send_sticker(message.chat.id, stickers[text], reply_to_message_id=message.reply_to_message_id)
+    text = message.text
+    resultText = text
+    for keyword in stickers:
+        regex = re.compile(keyword, re.IGNORECASE)
+        search = regex.search(text)
 
+        if search:
+            print(search)
+            print(search.group())
+            await client.send_sticker(message.chat.id, stickers[keyword], reply_to_message_id=message.reply_to_message_id)
+            if search.group() == text:
+                await message.delete()
+                break
+            resultText = message.text.replace(search.group(), "*стикан*")
+    if resultText != text:
+        await message.edit_text(resultText)
+    # TODO: message.edit affects only first match
 
 app.run(__init__())
